@@ -210,8 +210,7 @@ export default Mixin.create({
     let includeRecords = this.hasSerializeRecordsOption(attr);
     let embeddedSnapshot = snapshot.belongsTo(attr);
     if (includeIds) {
-      let schema = this.store.modelFor(snapshot.modelName);
-      let serializedKey = this._getMappedKey(relationship.key, schema);
+      let serializedKey = this._getMappedKey(relationship.key, snapshot.modelName);
       if (serializedKey === relationship.key && this.keyForRelationship) {
         serializedKey = this.keyForRelationship(relationship.key, relationship.kind, 'serialize');
       }
@@ -232,8 +231,7 @@ export default Mixin.create({
 
   _serializeEmbeddedBelongsTo(snapshot, json, relationship) {
     let embeddedSnapshot = snapshot.belongsTo(relationship.key);
-    let schema = this.store.modelFor(snapshot.modelName);
-    let serializedKey = this._getMappedKey(relationship.key, schema);
+    let serializedKey = this._getMappedKey(relationship.key, snapshot.modelName);
     if (serializedKey === relationship.key && this.keyForRelationship) {
       serializedKey = this.keyForRelationship(relationship.key, relationship.kind, 'serialize');
     }
@@ -396,8 +394,7 @@ export default Mixin.create({
     }
 
     if (this.hasSerializeIdsOption(attr)) {
-      let schema = this.store.modelFor(snapshot.modelName);
-      let serializedKey = this._getMappedKey(relationship.key, schema);
+      let serializedKey = this._getMappedKey(relationship.key, snapshot.modelName);
       if (serializedKey === relationship.key && this.keyForRelationship) {
         serializedKey = this.keyForRelationship(relationship.key, relationship.kind, 'serialize');
       }
@@ -434,8 +431,7 @@ export default Mixin.create({
   },
 
   _serializeEmbeddedHasMany(snapshot, json, relationship) {
-    let schema = this.store.modelFor(snapshot.modelName);
-    let serializedKey = this._getMappedKey(relationship.key, schema);
+    let serializedKey = this._getMappedKey(relationship.key, snapshot.modelName);
     if (serializedKey === relationship.key && this.keyForRelationship) {
       serializedKey = this.keyForRelationship(relationship.key, relationship.kind, 'serialize');
     }
