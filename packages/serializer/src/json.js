@@ -686,9 +686,10 @@ const JSONSerializer = Serializer.extend({
       if (relationshipHash.id) {
         relationshipHash.id = coerceId(relationshipHash.id);
       }
-
-      let modelClass = this.store.modelFor(relationshipModelName);
-      if (relationshipHash.type && !modelClass.fields.has('type')) {
+      let id = { type: relationshipModelName };
+      let attrsDef = this.store.getSchemaDefinitionService().attributesDefinitionFor(id);
+      let relsDef = this.store.getSchemaDefinitionService().relationshipsDefinitionFor(id);
+      if (relationshipHash.type && !attrsDef.type && !relsDef.type) {
         relationshipHash.type = this.modelNameFromPayloadKey(relationshipHash.type);
       }
 
@@ -839,7 +840,7 @@ const JSONSerializer = Serializer.extend({
 
     if (attrs) {
       for (let key in attrs) {
-        normalizedKey = payloadKey = this._getMappedKey(key, modelClass);
+        normalizedKey = payloadKey = this._getMappedKey(key, modelClass.modelName);
 
         if (hash[payloadKey] === undefined) {
           continue;
@@ -870,14 +871,18 @@ const JSONSerializer = Serializer.extend({
     @param {String} key
     @return {String} key
   */
-  _getMappedKey(key, modelClass) {
+  _getMappedKey(key, modelName) {
+    let id = { type: modelName };
+    let attrsDef = this.store.getSchemaDefinitionService().attributesDefinitionFor(id);
+    let relsDef = this.store.getSchemaDefinitionService().relationshipsDefinitionFor(id);
+
     warn(
       'There is no attribute or relationship with the name `' +
         key +
         '` on `' +
-        modelClass.modelName +
+        modelName +
         '`. Check your serializers attrs hash.',
-      modelClass.attributes.has(key) || modelClass.relationshipsByName.has(key),
+      attrsDef[key] || relsDef[key],
       {
         id: 'ds.serializer.no-mapped-attrs-key',
       }
@@ -945,12 +950,27 @@ const JSONSerializer = Serializer.extend({
     @return {boolean} true if the hasMany relationship should be serialized
   */
   shouldSerializeHasMany(snapshot, key, relationship) {
-    const schema = this.store.modelFor(snapshot.modelName);
-    let relationshipType = schema.determineRelationshipType(relationship, this.store);
+    let relationshipType = this._determineRelationshipType(relationship);
     if (this._mustSerialize(key)) {
       return true;
     }
     return this._canSerialize(key) && (relationshipType === 'manyToNone' || relationshipType === 'manyToMany');
+  },
+
+  _determineRelationshipType(relationship) {
+    relationship.kind;
+    if (relationship.options.inverse) {
+      let inverseRelationship = this.store
+        .getSchemaDefinitionService()
+        .relationshipsDefinitionFor({ type: relationship.type })[relationship.options.inverse];
+      if (inverseRelationship.kind === 'belongsTo') {
+        return relationship.kind === 'belongsTo' ? 'oneToOne' : 'manyToOne';
+      } else {
+        return relationship.kind === 'belongsTo' ? 'oneToMany' : 'manyToMany';
+      }
+    } else {
+      return relationship.kind === 'belongsTo' ? 'oneToNone' : 'manyToNone';
+    }
   },
 
   // SERIALIZE
@@ -1202,8 +1222,7 @@ const JSONSerializer = Serializer.extend({
 
       // if provided, use the mapping provided by `attrs` in
       // the serializer
-      let schema = this.store.modelFor(snapshot.modelName);
-      let payloadKey = this._getMappedKey(key, schema);
+      let payloadKey = this._getMappedKey(key, snapshot.modelName);
 
       if (payloadKey === key && this.keyForAttribute) {
         payloadKey = this.keyForAttribute(key, 'serialize');
@@ -1248,8 +1267,7 @@ const JSONSerializer = Serializer.extend({
 
       // if provided, use the mapping provided by `attrs` in
       // the serializer
-      let schema = this.store.modelFor(snapshot.modelName);
-      let payloadKey = this._getMappedKey(key, schema);
+      let payloadKey = this._getMappedKey(key, snapshot.modelName);
       if (payloadKey === key && this.keyForRelationship) {
         payloadKey = this.keyForRelationship(key, 'belongsTo', 'serialize');
       }
@@ -1302,8 +1320,7 @@ const JSONSerializer = Serializer.extend({
       if (hasMany !== undefined) {
         // if provided, use the mapping provided by `attrs` in
         // the serializer
-        let schema = this.store.modelFor(snapshot.modelName);
-        let payloadKey = this._getMappedKey(key, schema);
+        let payloadKey = this._getMappedKey(key, snapshot.modelName);
         if (payloadKey === key && this.keyForRelationship) {
           payloadKey = this.keyForRelationship(key, 'hasMany', 'serialize');
         }

@@ -655,8 +655,7 @@ const JSONAPISerializer = JSONSerializer.extend({
         value = transform.serialize(value, attribute.options);
       }
 
-      let schema = this.store.modelFor(snapshot.modelName);
-      let payloadKey = this._getMappedKey(key, schema);
+      let payloadKey = this._getMappedKey(key, snapshot.modelName);
 
       if (payloadKey === key) {
         payloadKey = this.keyForAttribute(key, 'serialize');
@@ -676,8 +675,7 @@ const JSONAPISerializer = JSONSerializer.extend({
       if (belongsTo === null || belongsToIsNotNew) {
         json.relationships = json.relationships || {};
 
-        let schema = this.store.modelFor(snapshot.modelName);
-        let payloadKey = this._getMappedKey(key, schema);
+        let payloadKey = this._getMappedKey(key, snapshot.modelName);
         if (payloadKey === key) {
           payloadKey = this.keyForRelationship(key, 'belongsTo', 'serialize');
         }
@@ -705,8 +703,7 @@ const JSONAPISerializer = JSONSerializer.extend({
       if (hasMany !== undefined) {
         json.relationships = json.relationships || {};
 
-        let schema = this.store.modelFor(snapshot.modelName);
-        let payloadKey = this._getMappedKey(key, schema);
+        let payloadKey = this._getMappedKey(key, snapshot.modelName);
         if (payloadKey === key && this.keyForRelationship) {
           payloadKey = this.keyForRelationship(key, 'hasMany', 'serialize');
         }

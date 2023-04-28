@@ -408,7 +408,7 @@ const RESTSerializer = JSONSerializer.extend({
         continue;
       }
       var type = store.modelFor(modelName);
-      var typeSerializer = store.serializerFor(type.modelName);
+      var typeSerializer = store.serializerFor(modelName);
 
       makeArray(payload[prop]).forEach((hash) => {
         let { data, included } = typeSerializer.normalize(type, hash, prop);
